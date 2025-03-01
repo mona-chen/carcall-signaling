@@ -10,3 +10,16 @@ declare module 'socket.io-parser' {
     }
   }
   
+
+  declare module 'socket.io' {
+    import { Server as HttpServer } from "http";
+    export class Server {
+      constructor(server: HttpServer, options?: any);
+      on(event: string, callback: Function): void;
+    }
+    export class Socket {
+      on(event: string, callback: Function): void;
+      emit(event: string, ...args: any[]): void;
+    }
+  }
+  

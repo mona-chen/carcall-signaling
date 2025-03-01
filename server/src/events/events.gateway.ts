@@ -92,7 +92,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     }
 
     @SubscribeMessage(ICE_CANDIDATE_EVENT)
-    async onIceCandidateEvent(@ConnectedSocket() client: Socket, @MessageBody() data: { isHost: boolean, candidate: any }): Promise<number> {
+    async onIceCandidateEvent(@ConnectedSocket() client: any, @MessageBody() data: { isHost: boolean, candidate: any }): Promise<number> {
         console.log(data);
         let clientId;
         if (data.isHost) {
