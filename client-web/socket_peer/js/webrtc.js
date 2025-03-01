@@ -68,7 +68,7 @@ let currentClientId = null;
 let calleeId = null;
 let initLocalMedia = false;
 
-const socket = io('ws://a4kcogc0kgg0sk4wgg4gw8ww.152.53.124.191.sslip.io');
+const socket = io('ws://localhost:3855');
 
 socket.on('connect', function () {
     console.log('Connected');

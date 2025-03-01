@@ -17,7 +17,11 @@ const ANSWER_EVENT = 'answer-event';
 const ICE_CANDIDATE_EVENT = 'ice-candidate-event';
 
 @WebSocketGateway( {
-    cors: true
+    cors: {
+    origin: 'http://127.0.0.1:5501', // Specify allowed frontend origin
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Allow sending cookies if needed
+    }
 })
 export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
