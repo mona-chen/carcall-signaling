@@ -1,46 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="description" content="WebRTC code samples">
-  <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
-  <meta itemprop="description" content="Client-side WebRTC code samples">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta id="theme-color" name="theme-color" content="#ffffff">
-  <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
-  <!--  https://codelabs.developers.google.com/codelabs/webrtc-web-->
-  <title>Realtime communication with WebRTC</title>
-  <script src="lib/socket.io.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Janus Video Call</title>
+    <script src="https://cdn.jsdelivr.net/npm/janus-gateway@1.3.0/npm/src/janus.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js" 
+    onerror="console.error('Adapter.js failed to load!');"></script>
 
-  <link rel="stylesheet" href="css/main.css"/>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        video { width: 45%; height: auto; border: 2px solid #333; margin: 10px; }
+        button { margin: 5px; padding: 10px; font-size: 16px; }
+    </style>
 </head>
-
 <body>
-<div id="container">
 
-  <img src="logo.svg" width="100"/>
-  <h1>WebRTC</h1>
-  <p id="peerConnectionStatus"></p>
-
-  <video id="localVideo" playsinline autoplay muted></video>
-  <video id="remoteVideo" playsinline autoplay></video>
-
-  <div class="box">
-    <p id="clientId"></p>
-  </div>
-
-  <div class="box">
-    <div style="display: inline;">
-      <input type="text" id="calleeIdInput" placeholder="Callee Id">
-      <button id="callButton">Call</button>
+    <h2>Janus WebRTC Video Call</h2>
+    
+    <div>
+        <input type="text" id="username" placeholder="Your username">
+        <button onclick="registerUser()">Register</button>
     </div>
-    <button id="hangupButton">Hang Up</button>
-  </div>
 
-</div>
+    <div>
+        <input type="text" id="targetUser" placeholder="Call username">
+        <button onclick="callUser()">Call</button>
+    </div>
+
+    <div>
+        <video id="localVideo" autoplay muted></video>
+        <video id="remoteVideo" autoplay></video>
+    </div>
+
+    <div>
+        <button onclick="acceptCall()">Accept</button>
+        <button onclick="rejectCall()">Reject</button>
+        <button onclick="toggleMute()">Mute/Unmute</button>
+        <button onclick="endCall()">End Call</button>
+    </div>
+
+    <script>
+        let janus, videocall;
+        let myUsername, peerUsername;
+        let localStream, remoteStream;
+        let server = "ws://a4kcogc0kgg0sk4wgg4gw8ww.152.53.124.191.sslip.io/";  // Change this!
+        server.onerror = (e) => console.error("WebSocket error:", e);
+        server.onopen = () => console.log("WebSocket connected!");
+        Janus.init({
+            debug: "all",
+            callback: function () {
+                janus = new Janus({
+                    server: server,
+                    success: function () {
+                        janus.attach({
+                            plugin: "janus.plugin.videocall",
+                            success: function (pluginHandle) {
+                                videocall = pluginHandle;
+                                console.log("Plugin attached!", videocall);
+                            },
+                            error: function (error) {
+                                console.error("Error attaching plugin:", error);
+                            },
+                            webrtcState: function (state) {
+                                console.log("WebRTC State:", state);
+                            },
+                            onremotestream: function (stream) {
+                                document.getElementById("remoteVideo").srcObject = stream;
+                            },
+                            onlocalstream: function (stream) {
+                                document.getElementById("localVideo").srcObject = stream;
+                            },
+                            onmessage: function (msg, jsep) {
+                                let event = msg["videocall"];
+                                if (event === "incomingcall") {
+                                    peerUsername = msg["username"];
+                                    console.log("Incoming call from", peerUsername);
+
+                                    // Store JSEP for answer
+                                    window.incomingJsep = jsep;
+
+                                    // Show accept/reject buttons
+                                    alert(`Incoming call from ${peerUsername}`);
+                                }
+                                if (jsep) {
+                                    videocall.handleRemoteJsep({ jsep: jsep });
+                                }
+                            },
+                            oncleanup: function () {
+                                console.log("Call ended!");
+                                document.getElementById("remoteVideo").srcObject = null;
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        console.error("Janus initialization failed:", error);
+                    }
+                });
+            }
+        });
+
+        function registerUser() {
+              if (!videocall) {
+                  console.error("Videocall plugin is not initialized!");
+                  alert("Please wait, the connection is still initializing.");
+                  return;
+              }
+
+              myUsername = document.getElementById("username").value;
+              if (!myUsername) return alert("Enter a username!");
+
+              let register = { request: "register", username: myUsername };
+              videocall.send({ message: register });
+              console.log("Registered as", myUsername);
+          }
+
+        function callUser() {
+            peerUsername = document.getElementById("targetUser").value;
+            if (!peerUsername) return alert("Enter a username to call!");
+
+            let call = { request: "call", username: peerUsername };
+            videocall.send({ message: call });
+
+            // Create local stream
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+                localStream = stream;
+                videocall.createOffer({
+                    media: { video: true, audio: true },
+                    stream: localStream,
+                    success: function (jsep) {
+                        videocall.send({ message: call, jsep: jsep });
+                    },
+                    error: function (error) {
+                        console.error("WebRTC error:", error);
+                    }
+                });
+            });
+        }
+
+        function acceptCall() {
+            if (!window.incomingJsep) return alert("No incoming call!");
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+                localStream = stream;
+                videocall.createAnswer({
+                    jsep: window.incomingJsep,
+                    media: { video: true, audio: true },
+                    stream: localStream,
+                    success: function (jsep) {
+                        let accept = { request: "accept" };
+                        videocall.send({ message: accept, jsep: jsep });
+                    },
+                    error: function (error) {
+                        console.error("WebRTC error:", error);
+                    }
+                });
+            });
+        }
+
+        function rejectCall() {
+            let reject = { request: "hangup" };
+            videocall.send({ message: reject });
+        }
+
+        function toggleMute() {
+            let muted = videocall.isAudioMuted();
+            videocall.muteAudio(!muted);
+        }
+
+        function endCall() {
+            let hangup = { request: "hangup" };
+            videocall.send({ message: hangup });
+        }
+    </script>
+
 </body>
-
-<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-<script src="js/webrtc.js"></script>
-
 </html>
