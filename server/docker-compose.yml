@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  carcall-signaling:
+    environment:
+      - NODE_ENV=production
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3855:3855'   # Expose the correct port
+    # No need to run these commands again, as they're in the Dockerfile
+    command: ["bun", "start"]
