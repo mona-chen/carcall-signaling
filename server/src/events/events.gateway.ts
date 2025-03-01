@@ -16,7 +16,9 @@ const OFFER_EVENT = 'offer-event';
 const ANSWER_EVENT = 'answer-event';
 const ICE_CANDIDATE_EVENT = 'ice-candidate-event';
 
-@WebSocketGateway()
+@WebSocketGateway( {
+    cors: true
+})
 export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server | undefined;
