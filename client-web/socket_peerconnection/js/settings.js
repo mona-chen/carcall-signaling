@@ -51,11 +51,11 @@
 // in the presented order. The first working server will be used for
 // the whole session.
 //
-var server = "http://localhost:8188/janus";
+var server = "ws://localhost:8188/janus";
 if(window.location.protocol === 'http:')
-	server = "http://localhost:8188/janus";
+	server = "ws://localhost:8188/janus";
 else
-server = "http://localhost:8188/janus";
+server = "ws://localhost:8188/janus";
 
 // When creating a Janus object, we can also specify which STUN/TURN
 // servers we'd like to use to gather additional candidates. This is
