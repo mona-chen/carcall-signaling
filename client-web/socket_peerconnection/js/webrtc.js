@@ -6,7 +6,14 @@
 /* global iceServers:readonly, Janus:readonly, server:readonly */
 
 var janus = null;
-var server = 'http://a4kcogc0kgg0sk4wgg4gw8ww.152.53.124.191.sslip.io/'
+iceServers = [
+    { "urls": "stun:stun.l.google.com:19302" },
+    { "urls": "stun:stun1.l.google.com:19302" },
+    { "urls": "stun:stun2.l.google.com:19302" },
+    { "urls": "stun:stun3.l.google.com:19302" },
+    { "urls": "stun:stun4.l.google.com:19302" }
+  ]
+
 var videocall = null;
 var opaqueId = "videocalltest-"+Janus.randomString(12);
 
@@ -27,6 +34,7 @@ var simulcastStarted = false;
 $(document).ready(function() {
 	// Initialize the library (console debug enabled)
 	Janus.init({debug: true, callback: function() {
+        console.log("Starting")
 		// Use a button to start the demo
 		$('#start').one('click', function() {
 			$(this).attr('disabled', true).unbind('click');
@@ -516,7 +524,8 @@ $(document).ready(function() {
 							});
 					},
 					error: function(error) {
-						Janus.error(error);
+						// Janus.error(error);
+                        console.log(JSON.stringify(error) )
 						bootbox.alert(error, function() {
 							window.location.reload();
 						});
@@ -525,6 +534,8 @@ $(document).ready(function() {
 						window.location.reload();
 					}
 				});
+
+                console.log(janus)
 		});
 	}});
 });

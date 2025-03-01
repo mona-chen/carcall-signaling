@@ -25,11 +25,11 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     private clientList: any = {};
     private roomList: any = [];
 
-    afterInit(server: Server) {
+    afterInit(server: any) {
         this.logger.log(`Init socket server ${server.path()}`);
     }
 
-    handleDisconnect(client: Socket) {
+    handleDisconnect(client: any) {
         this.logger.log(`Client disconnected: ${client.id}`);
         delete this.clientList[client.id];
         for (let i = 0; i < this.roomList.length; i++) {
@@ -40,7 +40,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         }
     }
 
-    handleConnection(client: Socket, ...args: any[]) {
+    handleConnection(client: any, ...args: any[]) {
         this.logger.log(`Client connected: ${client.id}`);
         this.clientList[client.id] = client;
         // @nhancv 3/30/20: Send client id to client
@@ -64,7 +64,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     }
 
     @SubscribeMessage(OFFER_EVENT)
-    async onOfferEvent(@ConnectedSocket() client: Socket, @MessageBody() data: { peerId: string, description: any }): Promise<number> {
+    async onOfferEvent(@ConnectedSocket() client: any, @MessageBody() data: { peerId: string, description: any }): Promise<number> {
         console.log(data);
         // @nhancv 3/30/20: Create a room contain client id with peerId;
         this.roomList.push({host: client.id, peer: data.peerId});
@@ -79,7 +79,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     }
 
     @SubscribeMessage(ANSWER_EVENT)
-    async onAnswerEvent(@ConnectedSocket() client: Socket, @MessageBody() data: { description: any }): Promise<number> {
+    async onAnswerEvent(@ConnectedSocket() client: any, @MessageBody() data: { description: any }): Promise<number> {
         console.log(data);
         const hostId = this.findHostId(client.id);
         const host = this.clientList[hostId];
